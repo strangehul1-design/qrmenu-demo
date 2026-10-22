@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Меню — Кафе «Пример»</title>
+<meta name="description" content="Пример QR-меню для кафе: категории, поиск, стоп-лист и правка цен за минуту. Открывается по QR-коду на столе, без приложений.">
+<meta name="theme-color" content="#13232B">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@600;800&family=Golos+Text:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2F6F5;
+  --card:#FFFFFF;
+  --ink:#13232B;
+  --muted:#566A70;
+  --line:#D3DEDC;
+  --enamel:#1E6F63;
+  --tag:#FFD43B;
+  --tag-ink:#241E00;
+  --stop:#8B9A9E;
+  --hot:#B93A26;
+  --display:"Fira Sans Extra Condensed","Arial Narrow",sans-serif;
+  --sans:"Golos Text",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --ease:cubic-bezier(.23,1,.32,1);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.5 var(--sans);-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--enamel);outline-offset:2px}
+.wrap{max-width:680px;margin:0 auto;padding:0 16px}
+
+/* шапка */
+.head{padding-top:28px;padding-bottom:18px}
+.brand{display:flex;align-items:center;gap:14px}
+/* ЛОГОТИП: заменить кружок на логотип кафе */
+.logo{flex:none;width:52px;height:52px;border-radius:50%;background:var(--enamel);color:#fff;display:grid;place-items:center;font:800 28px/1 var(--display)}
+.name{margin:0;font:800 clamp(34px,9vw,46px)/1 var(--display);letter-spacing:-.01em}
+.info{margin:10px 0 0;color:var(--muted);font-size:15px}
+.tools{display:flex;gap:10px;margin-top:18px}
+.search{flex:1;min-width:0;position:relative}
+.search input{width:100%;height:48px;padding:0 14px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-size:16px}
+.search input::placeholder{color:#7C8E93}
+.search input:focus-visible{outline-offset:0;border-color:var(--enamel)}
+.btn-qr{flex:none;height:48px;padding:0 16px;border:1.5px solid var(--ink);border-radius:12px;background:transparent;font-weight:600;font-size:15px;transition:background .2s var(--ease),color .2s var(--ease)}
+.btn-qr:hover{background:var(--ink);color:#fff}
+
+/* режим просмотра: гость / владелец */
+.mode{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;padding:4px;border-radius:12px;background:#E1EAE8}
+.mode button{height:40px;border:0;border-radius:9px;background:transparent;font-weight:600;font-size:15px;color:var(--muted);transition:background .2s var(--ease),color .2s var(--ease)}
+.mode button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(19,35,43,.14)}
+.owner-note{display:none;margin:12px 0 0;padding:12px 14px;border-radius:12px;background:var(--tag);color:var(--tag-ink);font-size:15px;line-height:1.45}
+body.owner .owner-note{display:block}
+
+/* категории */
+.chips{position:sticky;top:0;z-index:5;background:var(--paper);border-bottom:1px solid var(--line)}
+.chips__row{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;scrollbar-width:none;max-width:680px;margin:0 auto}
+.chips__row::-webkit-scrollbar{display:none}
+.chip{flex:none;height:44px;padding:0 18px;border:1.5px solid var(--line);border-radius:22px;background:var(--card);font-weight:500;font-size:15px;transition:background .2s var(--ease),color .2s var(--ease),border-color .2s var(--ease)}
+.chip[aria-current="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+
+/* блюда */
+.cat{scroll-margin-top:68px;padding-top:26px}
+.cat h2{margin:0 0 4px;font:800 30px/1.1 var(--display);letter-spacing:.005em}
+.list{list-style:none;margin:0;padding:0}
+.item{border-bottom:1px solid var(--line)}
+.item__btn{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;width:100%;padding:14px 0;border:0;background:transparent;text-align:left}
+.item__main{min-width:0;display:block}
+.item__name{display:block;font-weight:600;font-size:17px;line-height:1.3}
+.item__desc{display:block;margin-top:3px;color:var(--muted);font-size:14.5px;line-height:1.4}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tag{padding:2px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;line-height:1.35;color:var(--muted);background:var(--card)}
+.tag--hit{border-color:var(--enamel);color:var(--enamel);font-weight:600}
+.tag--hot{border-color:var(--hot);color:var(--hot);font-weight:600}
+.item__side{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.price{display:block;padding:7px 11px 6px 16px;background:var(--tag);color:var(--tag-ink);font:800 21px/1 var(--display);font-variant-numeric:tabular-nums;white-space:nowrap;clip-path:polygon(10px 0,100% 0,100% 100%,10px 100%,0 50%)}
+.w{font-size:13px;color:var(--muted)}
+.item--out .item__name{color:var(--stop);text-decoration:line-through;text-decoration-thickness:1.5px}
+.item--out .item__desc,.item--out .w{color:var(--stop)}
+.item--out .price{background:#E3E9E8;color:var(--stop);font-size:15px;padding-top:8px;padding-bottom:7px}
+.own{display:none;align-items:center;justify-content:space-between;gap:14px;margin:-4px 0 14px;padding:10px 12px;border-radius:12px;background:#E1EAE8}
+body.owner .own{display:flex}
+.sw{display:flex;align-items:center;gap:10px;font-weight:500;font-size:15px;min-height:44px;cursor:pointer}
+.sw input{position:absolute;opacity:0;width:1px;height:1px}
+.sw i{position:relative;flex:none;width:46px;height:28px;border-radius:14px;background:#9FB0B3;transition:background .2s var(--ease)}
+.sw i::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform .2s var(--ease)}
+.sw input:checked+i{background:var(--enamel)}
+.sw input:checked+i::after{transform:translateX(18px)}
+.sw input:focus-visible+i{outline:3px solid var(--enamel);outline-offset:2px}
+.pr{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500}
+.pr input{width:84px;height:44px;padding:0 10px;border:1.5px solid var(--line);border-radius:10px;background:var(--card);text-align:right;font-size:16px;font-variant-numeric:tabular-nums}
+
+.empty{display:none;padding:44px 0 24px;text-align:center;color:var(--muted)}
+.empty strong{display:block;margin-bottom:6px;font:800 26px/1.1 var(--display);color:var(--ink)}
+.empty.show{display:block}
+
+/* призыв и подвал */
+.cta{margin:44px 0 0;padding:24px 20px;border-radius:18px;background:var(--ink);color:#EAF1F0}
+.cta h2{margin:0 0 8px;font:800 28px/1.1 var(--display);color:#fff}
+.cta p{margin:0 0 16px;color:#B9CBCB;font-size:15.5px}
+.cta ul{margin:0 0 20px;padding:0 0 0 18px;font-size:15.5px}
+.cta li{margin-bottom:4px}
+.cta a.go{display:inline-flex;align-items:center;min-height:48px;padding:0 20px;border-radius:12px;background:var(--tag);color:var(--tag-ink);font-weight:600;text-decoration:none}
+.cta a.go:hover{filter:brightness(1.05)}
+.foot{padding:22px 0 44px;color:var(--muted);font-size:13.5px}
+.foot a{color:var(--ink)}
+
+/* окна */
+dialog{padding:0;border:0;color:var(--ink);background:var(--card)}
+dialog::backdrop{background:rgba(19,35,43,.55)}
+.sheet{width:min(100%,680px);max-width:100%;margin:auto auto 0;border-radius:22px 22px 0 0}
+.sheet[open]{animation:up .3s var(--ease)}
+@keyframes up{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.pad{padding:22px 20px 26px}
+.close{float:right;width:44px;height:44px;margin:-8px -8px 0 8px;border:0;border-radius:50%;background:#E8EFEE;font-size:22px;line-height:1}
+.sheet h3{margin:0 0 6px;font:800 30px/1.1 var(--display)}
+.sheet .row{display:flex;align-items:center;gap:14px;margin:14px 0}
+.facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 0}
+.fact{padding:10px 12px;border-radius:12px;background:var(--paper);font-size:13px;color:var(--muted)}
+.fact b{display:block;margin-top:2px;font:600 17px/1.2 var(--sans);color:var(--ink)}
+.allerg{margin:14px 0 0;color:var(--muted);font-size:14.5px}
+.soldout{margin:12px 0 0;padding:10px 12px;border-radius:10px;background:#E8EFEE;font-size:14.5px}
+.modal{width:min(92vw,380px);margin:auto;border-radius:22px}
+.tent{text-align:center}
+.tent h3{margin:0 0 4px;font:800 34px/1.05 var(--display)}
+.tent p{margin:0;color:var(--muted);font-size:15px}
+.qrbox{width:min(100%,260px);margin:18px auto;padding:14px;border-radius:14px;border:1.5px solid var(--line);background:#fff}
+.qrbox svg{display:block;width:100%;height:auto;fill:#000}
+.qrbox span{display:block;font-size:14px;color:var(--muted)}
+.actions{display:flex;gap:10px;margin-top:6px}
+.actions button{flex:1;min-height:48px;border-radius:12px;border:1.5px solid var(--ink);background:transparent;font-weight:600}
+.actions button.main{background:var(--ink);color:#fff}
+.hint{margin:14px 0 0;color:var(--muted);font-size:13.5px}
+
+.toast{position:fixed;left:50%;bottom:20px;z-index:20;width:max-content;max-width:calc(100% - 32px);padding:12px 16px;border-radius:12px;background:var(--ink);color:#fff;font-size:15px;transform:translate(-50%,20px);opacity:0;pointer-events:none;transition:transform .25s var(--ease),opacity .25s var(--ease)}
+.toast.show{transform:translate(-50%,0);opacity:1}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation:none!important;transition:none!important}
+}
+@media print{
+  body>*:not(#qr){display:none!important}
+  body{background:#fff}
+  #qr{position:static;display:block!important;margin:0 auto;width:auto;max-width:none;box-shadow:none}
+  #qr .actions,#qr .hint{display:none}
+  .tent h3{font-size:56px}
+  .qrbox{width:340px}
+}
+</style>
+</head>
+<body>
+
+<header class="wrap head">
+  <div class="brand">
+    <div class="logo" aria-hidden="true">К</div>
+    <h1 class="name">Кафе «Пример»</h1>
+  </div>
+  <p class="info">Ленина, 12. Открыто с 9 до 22. Wi-Fi: primer_cafe</p>
+
+  <div class="tools">
+    <div class="search">
+      <input id="q" type="search" placeholder="Найти блюдо" aria-label="Найти блюдо" autocomplete="off" enterkeyhint="search">
+    </div>
+    <button class="btn-qr" id="openQr" type="button">QR на стол</button>
+  </div>
+
+  <div class="mode" role="group" aria-label="Режим просмотра">
+    <button type="button" id="modeGuest" aria-pressed="true">Вид гостя</button>
+    <button type="button" id="modeOwner" aria-pressed="false">Вид владельца</button>
+  </div>
+  <p class="owner-note">Снимите галочку у блюда — оно сразу исчезнет из меню у гостей. Поменяйте цену — новая цена появится у всех без перепечатки. Попробуйте на любом блюде.</p>
+</header>
+
+<nav class="chips" aria-label="Разделы меню">
+  <div class="chips__row" id="chips"></div>
+</nav>
+
+<main class="wrap">
+  <div id="menu"></div>
+  <div class="empty" id="empty" role="status">
+    <strong>Такого нет в меню</strong>
+    Попробуйте «суп», «курица» или «пирожок».
+  </div>
+
+  <section class="cta" aria-labelledby="ctaH">
+    <h2 id="ctaH">Такое меню для вашего кафе</h2>
+    <p>Это пример: блюда и цены выдуманные. В вашем будут ваши блюда, фото, цены и логотип.</p>
+    <ul>
+      <li>Открывается по QR-коду на столе, приложение не нужно</li>
+      <li>Цены и стоп-лист вы правите сами с телефона</li>
+      <li>Готовая карточка с QR для печати на столы</li>
+      <li>Работает на любом телефоне, грузится за секунду</li>
+    </ul>
+    <a class="go" href="https://t.me/tacokinggl1">Обсудить меню для моего кафе</a>
+  </section>
+
+  <footer class="foot">
+    Черновой пример страницы. Сделал Арсений Асянов, Digital для бизнеса.
+    <a href="https://strangehul1-design.github.io/web-chef-portfolio/ru/">Портфолио</a>
+  </footer>
+</main>
+
+<dialog class="sheet" id="sheet" aria-labelledby="sName">
+  <div class="pad">
+    <button class="close" type="button" id="sheetClose" aria-label="Закрыть">×</button>
+    <h3 id="sName"></h3>
+    <p id="sDesc" style="margin:0;color:var(--muted)"></p>
+    <div class="row"><span class="price" id="sPrice"></span></div>
+    <div class="facts">
+      <div class="fact">Выход<b id="sW"></b></div>
+      <div class="fact">Калории<b id="sK"></b></div>
+      <div class="fact">Белки / жиры / углев.<b id="sB"></b></div>
+    </div>
+    <p class="allerg" id="sA"></p>
+    <p class="soldout" id="sOut" hidden>Сегодня закончилось. Загляните завтра или выберите похожее блюдо из этого раздела.</p>
+  </div>
+</dialog>
+
+<dialog class="modal" id="qr" aria-labelledby="qrH">
+  <div class="pad tent">
+    <h3 id="qrH">Меню в телефоне</h3>
+    <p>Наведите камеру на код. Кафе «Пример»</p>
+    <div class="qrbox" id="qrBox"></div>
+    <div class="actions">
+      <button type="button" id="qrPrint" class="main">Распечатать</button>
+      <button type="button" id="qrClose">Закрыть</button>
+    </div>
+    <p class="hint">Так выглядит карточка на столе: печатаете на листе А6 и ставите в подставку. Код ведёт на эту страницу.</p>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+/* Все блюда и цены вымышленные. В рабочей версии берутся у владельца. */
+const CATS=[
+  {id:'salad',name:'Салаты'},
+  {id:'soup',name:'Супы'},
+  {id:'hot',name:'Горячее'},
+  {id:'side',name:'Гарниры'},
+  {id:'bake',name:'Выпечка и десерты'},
+  {id:'drink',name:'Напитки'}
+];
+const MENU=[
+  {id:1,cat:'salad',name:'Оливье с курицей',desc:'Картофель, морковь, огурец, горошек, курица, майонез',w:'180 г',k:210,bju:'7 / 14 / 12',a:'Яйцо, горчица',price:160,tags:[],stock:true},
+  {id:2,cat:'salad',name:'Греческий',desc:'Помидоры, огурцы, перец, маслины, фета, оливковое масло',w:'200 г',k:185,bju:'5 / 14 / 6',a:'Молоко',price:230,tags:['вегетарианское'],stock:true},
+  {id:3,cat:'salad',name:'Винегрет',desc:'Свёкла, картофель, морковь, квашеная капуста, подсолнечное масло',w:'150 г',k:120,bju:'2 / 6 / 14',a:'Нет',price:110,tags:['постное'],stock:true},
+  {id:4,cat:'salad',name:'Сельдь под шубой',desc:'Сельдь, свёкла, картофель, морковь, яйцо, майонез',w:'180 г',k:240,bju:'8 / 17 / 12',a:'Рыба, яйцо, горчица',price:190,tags:[],stock:true},
+
+  {id:5,cat:'soup',name:'Борщ со сметаной',desc:'Говядина, свёкла, капуста, картофель, сметана',w:'300 / 20 г',k:190,bju:'9 / 9 / 17',a:'Молоко',price:240,tags:['хит'],stock:true},
+  {id:6,cat:'soup',name:'Куриный суп с лапшой',desc:'Куриный бульон, домашняя лапша, зелень',w:'300 г',k:135,bju:'8 / 5 / 15',a:'Глютен, яйцо',price:190,tags:[],stock:true},
+  {id:7,cat:'soup',name:'Солянка мясная',desc:'Три вида мяса, копчёности, маслины, лимон, сметана',w:'300 / 20 г',k:260,bju:'14 / 17 / 9',a:'Молоко',price:290,tags:['острое'],stock:false},
+  {id:8,cat:'soup',name:'Грибной крем-суп',desc:'Шампиньоны, сливки, гренки',w:'280 г',k:210,bju:'6 / 14 / 14',a:'Молоко, глютен',price:250,tags:['вегетарианское'],stock:true},
+
+  {id:9,cat:'hot',name:'Курица в сливочном соусе',desc:'Филе бедра, сливки, чеснок, зелень. Гарнир отдельно',w:'200 г',k:310,bju:'24 / 21 / 4',a:'Молоко',price:320,tags:['хит'],stock:true},
+  {id:10,cat:'hot',name:'Шашлык из свинины',desc:'Шея на углях, маринованный лук, соус. Гарнир отдельно',w:'150 г',k:380,bju:'22 / 31 / 2',a:'Нет',price:390,tags:['хит'],stock:true},
+  {id:11,cat:'hot',name:'Котлета домашняя',desc:'Говядина со свининой, лук, хлеб. Гарнир отдельно',w:'120 г',k:290,bju:'16 / 20 / 12',a:'Глютен, яйцо, молоко',price:170,tags:[],stock:true},
+  {id:12,cat:'hot',name:'Гуляш из говядины',desc:'Тушёная говядина в томатно-луковом соусе',w:'150 г',k:240,bju:'18 / 15 / 7',a:'Глютен',price:340,tags:[],stock:true},
+  {id:13,cat:'hot',name:'Пельмени домашние',desc:'Ручная лепка, сметана или масло',w:'250 / 30 г',k:330,bju:'15 / 14 / 33',a:'Глютен, яйцо, молоко',price:280,tags:[],stock:true},
+  {id:14,cat:'hot',name:'Вареники с картошкой и грибами',desc:'Лук, жареные грибы, сметана',w:'250 / 30 г',k:260,bju:'7 / 8 / 38',a:'Глютен, молоко',price:260,tags:['вегетарианское'],stock:true},
+
+  {id:15,cat:'side',name:'Картофельное пюре',desc:'На молоке, со сливочным маслом',w:'150 г',k:140,bju:'3 / 6 / 18',a:'Молоко',price:90,tags:[],stock:true},
+  {id:16,cat:'side',name:'Гречка рассыпчатая',desc:'Варёная, со сливочным маслом по желанию',w:'150 г',k:130,bju:'5 / 2 / 25',a:'Нет',price:80,tags:['постное'],stock:true},
+  {id:17,cat:'side',name:'Рис с овощами',desc:'Рис, морковь, болгарский перец, горошек',w:'150 г',k:150,bju:'3 / 3 / 29',a:'Нет',price:95,tags:['постное'],stock:true},
+  {id:18,cat:'side',name:'Макароны',desc:'Из твёрдых сортов пшеницы',w:'150 г',k:170,bju:'6 / 1 / 34',a:'Глютен',price:80,tags:[],stock:true},
+
+  {id:19,cat:'bake',name:'Пирожок с капустой',desc:'Печёный, с яйцом',w:'90 г',k:190,bju:'5 / 7 / 28',a:'Глютен, яйцо',price:60,tags:[],stock:true},
+  {id:20,cat:'bake',name:'Пирожок с мясом',desc:'Печёный, говядина с луком',w:'90 г',k:240,bju:'9 / 11 / 27',a:'Глютен, яйцо',price:80,tags:[],stock:true},
+  {id:21,cat:'bake',name:'Блинчики со сгущёнкой',desc:'Три тонких блинчика, сгущённое молоко',w:'180 г',k:420,bju:'9 / 15 / 62',a:'Глютен, яйцо, молоко',price:190,tags:[],stock:true},
+  {id:22,cat:'bake',name:'Чизкейк',desc:'Сливочный сыр, песочная основа, ягодный соус',w:'120 г',k:380,bju:'6 / 24 / 36',a:'Глютен, яйцо, молоко',price:260,tags:['хит'],stock:true},
+
+  {id:23,cat:'drink',name:'Чай в чайнике',desc:'Чёрный или зелёный на выбор, лимон по запросу',w:'500 мл',k:2,bju:'0 / 0 / 0',a:'Нет',price:120,tags:['постное'],stock:true},
+  {id:24,cat:'drink',name:'Морс клюквенный',desc:'Домашний, без консервантов',w:'300 мл',k:55,bju:'0 / 0 / 13',a:'Нет',price:90,tags:['постное'],stock:true},
+  {id:25,cat:'drink',name:'Компот из сухофруктов',desc:'Яблоко, курага, чернослив, изюм',w:'250 мл',k:60,bju:'0 / 0 / 15',a:'Нет',price:60,tags:['постное'],stock:true},
+  {id:26,cat:'drink',name:'Американо',desc:'Двойной эспрессо, горячая вода',w:'250 мл',k:5,bju:'0 / 0 / 1',a:'Нет',price:130,tags:[],stock:true},
+  {id:27,cat:'drink',name:'Капучино',desc:'Эспрессо, молочная пена',w:'250 мл',k:110,bju:'6 / 6 / 9',a:'Молоко',price:170,tags:[],stock:true}
+];
+
+const $=s=>document.querySelector(s);
+const menuEl=$('#menu'), chipsEl=$('#chips'), emptyEl=$('#empty'), toastEl=$('#toast');
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+const state={q:'',owner:false};
+let io=null, toastTimer=null;
+
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rub=n=>n.toLocaleString('ru-RU')+' ₽';
+
+function tagHtml(t){
+  const cls=t==='хит'?' tag--hit':t==='острое'?' tag--hot':'';
+  return `<span class="tag${cls}">${esc(t)}</span>`;
+}
+
+function rowHtml(i){
+  const out=!i.stock;
+  const tags=i.tags.length?`<span class="tags">${i.tags.map(tagHtml).join('')}</span>`:'';
+  return `<li class="item${out?' item--out':''}" data-id="${i.id}">
+    <button class="item__btn" type="button" data-open="${i.id}">
+      <span class="item__main">
+        <span class="item__name">${esc(i.name)}</span>
+        <span class="item__desc">${esc(i.desc)}</span>
+        ${out?'<span class="tags"><span class="tag">закончилось</span></span>':tags}
+      </span>
+      <span class="item__side">
+        <span class="price">${out?'нет':rub(i.price)}</span>
+        <span class="w">${esc(i.w)}</span>
+      </span>
+    </button>
+    <div class="own">
+      <label class="sw"><input type="checkbox" data-stock="${i.id}" ${i.stock?'checked':''}><i></i>В наличии</label>
+      <label class="pr">Цена <input type="number" inputmode="numeric" min="0" max="99999" step="5" value="${i.price}" data-price="${i.id}" aria-label="Цена: ${esc(i.name)}"> ₽</label>
+    </div>
+  </li>`;
+}
+
+function render(focusSel){
+  const q=state.q.trim().toLowerCase();
+  let html='', shown=0;
+  const present=[];
+  for(const c of CATS){
+    const items=MENU.filter(i=>i.cat===c.id && (!q||(i.name+' '+i.desc).toLowerCase().includes(q)));
+    if(!items.length) continue;
+    shown+=items.length; present.push(c);
+    html+=`<section class="cat" id="c-${c.id}" aria-labelledby="h-${c.id}"><h2 id="h-${c.id}">${c.name}</h2><ul class="list">${items.map(rowHtml).join('')}</ul></section>`;
+  }
+  menuEl.innerHTML=html;
+  emptyEl.classList.toggle('show',shown===0);
+  chipsEl.innerHTML=present.map((c,n)=>`<button class="chip" type="button" data-cat="${c.id}"${n===0?' aria-current="true"':''}>${c.name}</button>`).join('');
+  chipsEl.parentElement.parentElement.style.display=present.length?'':'none';
+  watch();
+  if(focusSel){const el=document.querySelector(focusSel); if(el) el.focus({preventScroll:true});}
+}
+
+/* подсветка раздела, который сейчас на экране */
+function watch(){
+  if(io) io.disconnect();
+  io=new IntersectionObserver(es=>{
+    for(const e of es){
+      if(!e.isIntersecting) continue;
+      const id=e.target.id.slice(2);
+      chipsEl.querySelectorAll('.chip').forEach(b=>{
+        const on=b.dataset.cat===id;
+        if(on){ b.setAttribute('aria-current','true');
+          chipsEl.scrollTo({left:b.offsetLeft-chipsEl.clientWidth/2+b.offsetWidth/2,behavior:reduce?'auto':'smooth'}); }
+        else b.removeAttribute('aria-current');
+      });
+    }
+  },{rootMargin:'-72px 0px -70% 0px'});
+  menuEl.querySelectorAll('.cat').forEach(s=>io.observe(s));
+}
+
+function toast(msg){
+  toastEl.textContent=msg; toastEl.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>toastEl.classList.remove('show'),2600);
+}
+
+/* клики */
+chipsEl.addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b) return;
+  const s=document.getElementById('c-'+b.dataset.cat);
+  if(s) s.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});
+});
+
+const sheet=$('#sheet');
+menuEl.addEventListener('click',e=>{
+  const b=e.target.closest('[data-open]'); if(!b) return;
+  const i=MENU.find(x=>x.id==b.dataset.open);
+  $('#sName').textContent=i.name;
+  $('#sDesc').textContent=i.desc;
+  $('#sPrice').textContent=i.stock?rub(i.price):'нет';
+  $('#sW').textContent=i.w;
+  $('#sK').textContent=i.k+' ккал';
+  $('#sB').textContent=i.bju+' г';
+  $('#sA').textContent='Аллергены: '+i.a;
+  $('#sOut').hidden=i.stock;
+  sheet.showModal();
+});
+$('#sheetClose').addEventListener('click',()=>sheet.close());
+sheet.addEventListener('click',e=>{ if(e.target===sheet) sheet.close(); });
+
+menuEl.addEventListener('change',e=>{
+  const st=e.target.closest('[data-stock]');
+  if(st){
+    const i=MENU.find(x=>x.id==st.dataset.stock); i.stock=st.checked;
+    render(`[data-stock="${i.id}"]`);
+    toast(i.stock?`«${i.name}» снова в меню`:`«${i.name}» убрано из меню у гостей`);
+    return;
+  }
+  const pr=e.target.closest('[data-price]');
+  if(pr){
+    const i=MENU.find(x=>x.id==pr.dataset.price);
+    const v=Math.round(Number(pr.value));
+    if(!Number.isFinite(v)||v<0){ pr.value=i.price; toast('Введите цену числом, например 250'); return; }
+    i.price=v; render(`[data-price="${i.id}"]`);
+    toast(`Новая цена «${i.name}»: ${rub(v)}. Гости уже видят её`);
+  }
+});
+
+$('#q').addEventListener('input',e=>{ state.q=e.target.value; render(); });
+
+function setMode(owner){
+  state.owner=owner; document.body.classList.toggle('owner',owner);
+  $('#modeGuest').setAttribute('aria-pressed',String(!owner));
+  $('#modeOwner').setAttribute('aria-pressed',String(owner));
+}
+$('#modeGuest').addEventListener('click',()=>setMode(false));
+$('#modeOwner').addEventListener('click',()=>setMode(true));
+
+/* QR на стол: ведёт на эту же страницу */
+const qrDlg=$('#qr');
+function drawQr(){
+  const box=$('#qrBox');
+  if(typeof qrcode!=='function'){ box.innerHTML='<span>Не удалось построить код: нужен интернет. Обновите страницу.</span>'; return; }
+  const q=qrcode(0,'M'); q.addData(location.href.split('#')[0]); q.make();
+  const n=q.getModuleCount(); let d='';
+  for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(q.isDark(r,c)) d+=`M${c} ${r}h1v1h-1z`;
+  box.innerHTML=`<svg viewBox="0 0 ${n} ${n}" shape-rendering="crispEdges" role="img" aria-label="QR-код со ссылкой на меню"><path d="${d}"/></svg>`;
+}
+$('#openQr').addEventListener('click',()=>{ drawQr(); qrDlg.showModal(); });
+$('#qrClose').addEventListener('click',()=>qrDlg.close());
+$('#qrPrint').addEventListener('click',()=>window.print());
+qrDlg.addEventListener('click',e=>{ if(e.target===qrDlg) qrDlg.close(); });
+
+render();
+</script>
+</body>
+</html>
